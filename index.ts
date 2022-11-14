@@ -18,6 +18,8 @@ class Transaction{
 
 //Container for multiple transactions
 class Block {
+    public nonce = Math.round(Math.random() * 99999999999); //One time use random number
+
     constructor (
         public prevHash: string,
         public transaction: Transaction,
@@ -45,7 +47,7 @@ class Chain {
 
     //Contructor to define genesis block
     constructor (){
-        this.chain = [new Block(null, new Transaction(100, 'genesis', 'satoshi'))];
+        this.chain = [new Block('', new Transaction(100, 'genesis', 'satoshi'))];
 
     }
 
@@ -54,9 +56,43 @@ class Chain {
 
     }
 
+    mine(nonce: number) {
+        let solution = 1;
+        console.log('⛏️ Mining...')
+
+        //While loop
+        while(true){
+            const hash = crypto.createHash('MD5');
+            hash.update((nonce + solution).toString()).end();
+
+            const attempt = hash.digest('hex');
+
+            if (attempt.substr(0,4) === '0000'){
+                console.log(`Solved: ${solution}`);
+                return solution;
+            }
+
+            solution += 1
+            
+        }
+    }
+
     addBlock(transaction: Transaction, senderPublicKey: string, signature: Buffer){
         const newBlock = new Block(this.lastBlock.hash, transaction); 
         this.chain.push(newBlock); //add new block to chain
+
+        //create a signature verification
+        const verifier = crypto.createVerify('SHA256');
+        verifier.update(transaction.toString());
+
+        const isValid = verifier.verify(senderPublicKey, signature); //Validate the transaction
+
+        if (isValid){
+            const newBlock = new Block(this.lastBlock.hash, transaction);
+            this.mine(newBlock.nonce)
+            this.chain.push(newBlock); //add new block to chain
+
+        }
 
     }
 }

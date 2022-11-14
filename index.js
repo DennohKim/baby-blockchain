@@ -43,6 +43,7 @@ class Block {
         this.prevHash = prevHash;
         this.transaction = transaction;
         this.timestamp = timestamp;
+        this.nonce = Math.round(Math.random() * 99999999999); //One time use random number
     }
     //Hash of a block
     get hash() {
@@ -56,14 +57,38 @@ class Block {
 class Chain {
     //Contructor to define genesis block
     constructor() {
-        this.chain = [new Block(null, new Transaction(100, 'genesis', 'satoshi'))];
+        this.chain = [new Block('', new Transaction(100, 'genesis', 'satoshi'))];
     }
     get lastBlock() {
         return this.chain[this.chain.length - 1];
     }
+    mine(nonce) {
+        let solution = 1;
+        console.log('⛏️ Mining...');
+        //While loop
+        while (true) {
+            const hash = crypto.createHash('MD5');
+            hash.update((nonce + solution).toString()).end();
+            const attempt = hash.digest('hex');
+            if (attempt.substr(0, 4) === '0000') {
+                console.log(`Solved: ${solution}`);
+                return solution;
+            }
+            solution += 1;
+        }
+    }
     addBlock(transaction, senderPublicKey, signature) {
         const newBlock = new Block(this.lastBlock.hash, transaction);
         this.chain.push(newBlock); //add new block to chain
+        //create a signature verification
+        const verifier = crypto.createVerify('SHA256');
+        verifier.update(transaction.toString());
+        const isValid = verifier.verify(senderPublicKey, signature); //Validate the transaction
+        if (isValid) {
+            const newBlock = new Block(this.lastBlock.hash, transaction);
+            this.mine(newBlock.nonce);
+            this.chain.push(newBlock); //add new block to chain
+        }
     }
 }
 Chain.instance = new Chain(); //There should be only one blockchain therefore make it a singleton instance
