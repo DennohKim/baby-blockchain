@@ -6,3 +6,5 @@
 * Run npm install
 * Run npm run start 
 
+*See console for transactions chain
+
