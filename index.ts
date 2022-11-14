@@ -16,7 +16,24 @@ class Transaction{
 
 }
 
+//Container for multiple transactions
 class Block {
+    constructor (
+        public prevHash: string,
+        public transaction: Transaction,
+        public timestamp = Date.now()
+
+    ) {}
+
+    //Hash of a block
+    get hash () {
+
+        const str = JSON.stringify(this); //stringify object
+        const hash = crypto.createHash('SHA256'); //specify the hashing algorithm
+        hash.update(str).end();
+        return hash.digest('hex');
+    }
+
 
 }
 
