@@ -68,4 +68,21 @@ class Chain {
 }
 Chain.instance = new Chain(); //There should be only one blockchain therefore make it a singleton instance
 class Wallet {
+    //Generate public and private key with RSA
+    constructor() {
+        const keypair = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 2048,
+            publicKeyEncoding: { type: 'spki', format: 'pem' },
+            privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+        });
+        this.privateKey = keypair.privateKey;
+        this.publicKey = keypair.publicKey;
+    }
+    sendMoney(amount, payeePublicKey) {
+        const transaction = new Transaction(amount, this.publicKey, payeePublicKey);
+        const sign = crypto.createSign('SHA256');
+        sign.update(transaction.toString()).end(); //create signature with transaction data as value
+        const signature = sign.sign(this.privateKey); //Sign it with the private key
+        Chain.instance.addBlock(transaction, this.publicKey, signature);
+    }
 }

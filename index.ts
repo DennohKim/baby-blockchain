@@ -54,18 +54,43 @@ class Chain {
 
     }
 
-    addBlock(transaction: Transaction, senderPublicKey: string, signature: string){
+    addBlock(transaction: Transaction, senderPublicKey: string, signature: Buffer){
         const newBlock = new Block(this.lastBlock.hash, transaction); 
         this.chain.push(newBlock); //add new block to chain
 
     }
-
-    
-
-
 }
 
 class Wallet {
+    public publicKey: string; // for receiving money
+    public privateKey: string; // for spending money
+
+    //Generate public and private key with RSA
+    constructor (){
+       const keypair = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem'},
+        privateKeyEncoding: { type: 'pkcs8', format: 'pem'}
+
+       });
+
+       this.privateKey = keypair.privateKey;
+       this.publicKey = keypair.publicKey;
+
+
+    }
+
+    sendMoney(amount: number, payeePublicKey: string){
+        const transaction = new Transaction(amount, this.publicKey, payeePublicKey);
+
+        const sign = crypto.createSign('SHA256');
+        sign.update(transaction.toString()).end(); //create signature with transaction data as value
+
+        const signature = sign.sign(this.privateKey); //Sign it with the private key
+        Chain.instance.addBlock(transaction, this.publicKey, signature);
+
+
+    }
 
 }
 
